@@ -1,0 +1,1196 @@
+<x-hrms-layout>
+    @section('page_title', 'New Employee Joining & Master Data Form')
+
+    <!-- Breadcrumb & Header -->
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
+                <a href="{{ route('employees.index') }}" class="hover:text-brand-600 transition">Employees</a>
+                <span>/</span>
+                <span class="text-slate-600 font-semibold">New Joining Form</span>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 tracking-tight">New Employee Joining & Master Data Form</h2>
+            <p class="text-xs text-slate-500 mt-1">Collect and verify information for onboarding, payroll, statutory compliance, and HR records.</p>
+        </div>
+
+        <a href="{{ route('employees.index') }}" 
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition self-start sm:self-auto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Employee List</span>
+        </a>
+    </div>
+
+    <!-- Error Validation summary -->
+    @if (isset($errors) && $errors->any())
+        <div class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+            <div class="font-bold mb-1 flex items-center gap-2">
+                <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Please fix the following form errors:
+            </div>
+            <ul class="list-disc list-inside space-y-0.5 ml-2">
+                @foreach ($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <!-- Master Multi-Section Form using Alpine.js for Tabs -->
+    <form method="POST" action="{{ route('employees.store') }}" x-ref="employeeForm" 
+          x-data="{ 
+              activeTab: 'job',
+              sameAddress: false,
+              selectedDepartment: '{{ old('department', '') }}',
+              selectedDesignation: '{{ old('designation', '') }}',
+              allDepartments: {{ $departments->toJson() }},
+              allDesignations: {{ $designations->toJson() }},
+              filteredDesignations: [],
+              init() {
+                  this.updateFilteredDesignations();
+              },
+              onDepartmentChange() {
+                  this.selectedDesignation = '';
+                  this.updateFilteredDesignations();
+              },
+              updateFilteredDesignations() {
+                  if (!this.selectedDepartment) {
+                      this.filteredDesignations = this.allDesignations;
+                      return;
+                  }
+                  const dept = this.allDepartments.find(d => d.name === this.selectedDepartment);
+                  if (dept) {
+                      const matched = this.allDesignations.filter(d => d.department_id === dept.id);
+                      this.filteredDesignations = matched.length > 0 ? matched : this.allDesignations;
+                  } else {
+                      this.filteredDesignations = this.allDesignations;
+                  }
+              },
+              copyAddress() {
+                  if (this.sameAddress) {
+                      $refs.perm_address.value = $refs.comm_address.value;
+                      $refs.perm_city.value = $refs.comm_city.value;
+                      $refs.perm_state.value = $refs.comm_state.value;
+                      $refs.perm_pincode.value = $refs.comm_pincode.value;
+                  }
+              },
+              submitWithNextTab(nextTab) {
+                  $refs.nextTabInput.value = nextTab;
+                  $refs.employeeForm.submit();
+              }
+          }">
+        @csrf
+        <input type="hidden" name="next_tab" x-ref="nextTabInput" value="">
+
+        <!-- Section Tabs Navigation -->
+        <div class="bg-white rounded-3xl p-2 border border-slate-100 shadow-sm mb-6 overflow-x-auto scrollbar-none">
+            <div class="flex items-center gap-1.5 min-w-max">
+                <button type="button" @click="activeTab = 'job'" 
+                        :class="activeTab === 'job' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'job' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">1</span>
+                    <span>Job Details</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'personal'" 
+                        :class="activeTab === 'personal' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'personal' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">2</span>
+                    <span>Personal</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'statutory'" 
+                        :class="activeTab === 'statutory' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'statutory' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">3</span>
+                    <span>Statutory / PF</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'bank'" 
+                        :class="activeTab === 'bank' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'bank' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">4</span>
+                    <span>Bank Account</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'address'" 
+                        :class="activeTab === 'address' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'address' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">5</span>
+                    <span>Address</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'emergency'" 
+                        :class="activeTab === 'emergency' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'emergency' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">6</span>
+                    <span>Emergency / Ref</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'nominee'" 
+                        :class="activeTab === 'nominee' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'nominee' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">7</span>
+                    <span>Nominee</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'family'" 
+                        :class="activeTab === 'family' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'family' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">8</span>
+                    <span>Family Members</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'docs'" 
+                        :class="activeTab === 'docs' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'docs' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">9</span>
+                    <span>Documents Checklist</span>
+                </button>
+
+                <button type="button" @click="activeTab = 'assets'" 
+                        :class="activeTab === 'assets' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100'"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold transition">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                          :class="activeTab === 'assets' ? 'bg-white/20' : 'bg-slate-200 text-slate-700'">10</span>
+                    <span>Assets / Devices</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab 1: EMPLOYEE & JOB DETAILS -->
+        <div x-show="activeTab === 'job'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">1. Employee & Job Details</h3>
+                    <p class="text-xs text-slate-500">Essential organization, designation and employment metadata</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 1 of 10</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Employee Name -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Employee Full Name <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="employee_name" value="{{ old('employee_name') }}" required 
+                           placeholder="e.g. Chirag Limbachiya" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Employee Code -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Employee Code / Ref. Number <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="employee_code" value="{{ old('employee_code', $suggestedCode) }}" required 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono font-bold rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-slate-50">
+                </div>
+
+                <!-- Department Select -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Department <span class="text-rose-500">*</span>
+                    </label>
+                    <select name="department" 
+                            x-model="selectedDepartment"
+                            @change="onDepartmentChange()"
+                            required 
+                            class="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        <option value="">-- Select Department --</option>
+                        @foreach ($departments as $dept)
+                            <option value="{{ $dept->name }}" data-dept-id="{{ $dept->id }}">
+                                {{ $dept->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Designation Select -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Designation <span class="text-rose-500">*</span>
+                    </label>
+                    <select name="designation" 
+                            x-model="selectedDesignation"
+                            required 
+                            class="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        <option value="">-- Select Designation --</option>
+                        <template x-for="desig in filteredDesignations" :key="desig.id">
+                            <option :value="desig.title" x-text="desig.title" :selected="desig.title === selectedDesignation"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- Reporting Person Name -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Reporting Person Name
+                    </label>
+                    <input type="text" name="reporting_person_name" value="{{ old('reporting_person_name') }}" 
+                           placeholder="e.g. Project Manager / Team Lead" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Work Location -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Work Location
+                    </label>
+                    <input type="text" name="work_location" value="{{ old('work_location') }}" 
+                           placeholder="e.g. Head Office / Remote / On-Site" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Branch -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Branch
+                    </label>
+                    <input type="text" name="branch" value="{{ old('branch') }}" 
+                           placeholder="e.g. Ahmedabad Branch" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Office Number -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Office Number / Desk Ext.
+                    </label>
+                    <input type="text" name="office_number" value="{{ old('office_number') }}" 
+                           placeholder="e.g. Ext-402" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Company Email ID -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Company Email ID (Login Username)
+                    </label>
+                    <input type="email" name="company_email" value="{{ old('company_email') }}" 
+                           placeholder="employee@hrms.com" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                    <span class="text-[11px] text-brand-600 font-medium mt-1 block">
+                        ★ Automatically creates employee portal login with default password: <strong>password</strong>
+                    </span>
+                </div>
+
+                <!-- Joining Date -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Joining Date
+                    </label>
+                    <input type="date" name="joining_date" value="{{ old('joining_date', date('Y-m-d')) }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Employment Type -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Employment Type <span class="text-rose-500">*</span>
+                    </label>
+                    <select name="employment_type" required 
+                            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                        <option value="Full Time" {{ old('employment_type') === 'Full Time' ? 'selected' : '' }}>Full Time</option>
+                        <option value="Part Time" {{ old('employment_type') === 'Part Time' ? 'selected' : '' }}>Part Time</option>
+                        <option value="Contract" {{ old('employment_type') === 'Contract' ? 'selected' : '' }}>Contract</option>
+                        <option value="Intern" {{ old('employment_type') === 'Intern' ? 'selected' : '' }}>Intern</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <div class="text-xs text-slate-400">Step 1 of 10</div>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'personal'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Personal Details</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('personal')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Personal Details</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: PERSONAL DETAILS -->
+        <div x-show="activeTab === 'personal'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">2. Personal Details</h3>
+                    <p class="text-xs text-slate-500">Identity, contact numbers, government identifiers & background</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 2 of 10</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Date of Birth -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Date of Birth</label>
+                    <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Gender -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Gender</label>
+                    <select name="gender" class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                        <option value="">Select Gender</option>
+                        <option value="Male" {{ old('gender') === 'Male' ? 'selected' : '' }}>Male</option>
+                        <option value="Female" {{ old('gender') === 'Female' ? 'selected' : '' }}>Female</option>
+                        <option value="Other" {{ old('gender') === 'Other' ? 'selected' : '' }}>Other</option>
+                    </select>
+                </div>
+
+                <!-- Marital Status -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Marital Status</label>
+                    <select name="marital_status" class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                        <option value="Single" {{ old('marital_status') === 'Single' ? 'selected' : '' }}>Single</option>
+                        <option value="Married" {{ old('marital_status') === 'Married' ? 'selected' : '' }}>Married</option>
+                        <option value="Other" {{ old('marital_status') === 'Other' ? 'selected' : '' }}>Other</option>
+                    </select>
+                </div>
+
+                <!-- Anniversary Date -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Anniversary Date (if applicable)</label>
+                    <input type="date" name="anniversary_date" value="{{ old('anniversary_date') }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Personal Mobile Number -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Personal Mobile Number</label>
+                    <input type="text" name="personal_mobile" value="{{ old('personal_mobile') }}" placeholder="+91 9876543210" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Personal Email ID -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Personal Email ID</label>
+                    <input type="email" name="personal_email" value="{{ old('personal_email') }}" placeholder="personal@gmail.com" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Aadhaar-Linked Mobile Number -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Aadhaar-Linked Mobile Number</label>
+                    <input type="text" name="aadhaar_linked_mobile" value="{{ old('aadhaar_linked_mobile') }}" placeholder="+91 9876543210" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Blood Group -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Blood Group</label>
+                    <input type="text" name="blood_group" value="{{ old('blood_group') }}" placeholder="e.g. O+, B+, A+" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- PAN Number -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">PAN Number</label>
+                    <input type="text" name="pan_number" value="{{ old('pan_number') }}" placeholder="ABCDE1234F" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono uppercase rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Aadhaar Number -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Aadhaar Number</label>
+                    <input type="text" name="aadhaar_number" value="{{ old('aadhaar_number') }}" placeholder="1234 5678 9012" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" @click="activeTab = 'job'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'statutory'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Statutory</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('statutory')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Statutory Details</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: STATUTORY / GOVERNMENT DETAILS -->
+        <div x-show="activeTab === 'statutory'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">3. Statutory / Government Details</h3>
+                    <p class="text-xs text-slate-500">PF, UAN, ESIC and statutory verification records</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 3 of 10</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">UAN Number</label>
+                    <input type="text" name="statutory_details[uan_number]" value="{{ old('statutory_details.uan_number') }}" placeholder="100XXXXXXXXX" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">ESIC Number</label>
+                    <input type="text" name="statutory_details[esic_number]" value="{{ old('statutory_details.esic_number') }}" placeholder="31XXXXXXXXXXXX" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">PF / ESIC Documents Received</label>
+                    <select name="statutory_details[docs_received]" class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                        <option value="N/A">N/A</option>
+                    </select>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Previous PF Account / UAN Details</label>
+                    <input type="text" name="statutory_details[prev_pf_uan]" value="{{ old('statutory_details.prev_pf_uan') }}" placeholder="Previous employer PF/UAN details" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Previous ESIC Details</label>
+                    <input type="text" name="statutory_details[prev_esic]" value="{{ old('statutory_details.prev_esic') }}" placeholder="Previous ESIC account info" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Statutory Details Verified By</label>
+                    <input type="text" name="statutory_details[verified_by]" value="{{ old('statutory_details.verified_by', Auth::user()->name) }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Verification Date</label>
+                    <input type="date" name="statutory_details[verification_date]" value="{{ old('statutory_details.verification_date', date('Y-m-d')) }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" @click="activeTab = 'personal'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'bank'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Bank</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('bank')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Bank Details</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: BANK / SALARY ACCOUNT DETAILS -->
+        <div x-show="activeTab === 'bank'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">4. Bank / Salary Account Details</h3>
+                    <p class="text-xs text-slate-500">Bank credentials for direct salary transfer and payroll processing</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 4 of 10</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Bank Name</label>
+                    <input type="text" name="bank_details[bank_name]" value="{{ old('bank_details.bank_name') }}" placeholder="e.g. HDFC Bank / SBI" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Account Holder Name</label>
+                    <input type="text" name="bank_details[account_holder]" value="{{ old('bank_details.account_holder') }}" placeholder="As per bank passbook" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Account Number</label>
+                    <input type="text" name="bank_details[account_number]" value="{{ old('bank_details.account_number') }}" placeholder="e.g. 50100XXXXXXXX" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">IFSC Code</label>
+                    <input type="text" name="bank_details[ifsc_code]" value="{{ old('bank_details.ifsc_code') }}" placeholder="HDFC0001234" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono uppercase rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Branch Name</label>
+                    <input type="text" name="bank_details[branch_name]" value="{{ old('bank_details.branch_name') }}" placeholder="Branch address / city" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Account Type</label>
+                    <select name="bank_details[account_type]" class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                        <option value="Savings">Savings</option>
+                        <option value="Current">Current</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Cancelled Cheque / Bank Proof Received</label>
+                    <select name="bank_details[cheque_received]" class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Bank Details Verified By</label>
+                    <input type="text" name="bank_details[verified_by]" value="{{ old('bank_details.verified_by', Auth::user()->name) }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <!-- Salary Structure Section (CTC, Gross, Basic, HRA) -->
+            <div class="p-5 rounded-2xl bg-brand-50/50 border border-brand-100 space-y-4"
+                 x-data="{
+                     monthlyGross: '{{ old('salary_structure.monthly_gross', 35000) }}',
+                     basicSalary: '{{ old('salary_structure.basic_salary', 17500) }}',
+                     hra: '{{ old('salary_structure.hra', 8750) }}',
+                     specialAllowance: '{{ old('salary_structure.special_allowance', 8750) }}',
+                     pf: '{{ old('salary_structure.pf_deduction', 1800) }}',
+                     pt: '{{ old('salary_structure.professional_tax', 200) }}',
+                     tds: '{{ old('salary_structure.tds', 0) }}',
+                     recalc() {
+                         let g = Number(this.monthlyGross || 0);
+                         this.basicSalary = Math.round(g * 0.5);
+                         this.hra = Math.round(g * 0.25);
+                         this.specialAllowance = Math.round(g * 0.25);
+                     }
+                 }">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold text-brand-800 uppercase tracking-wider flex items-center gap-2">
+                            <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            Employee Salary Package & Compensation (Monthly)
+                        </h4>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Define base monthly salary used for automated payroll calculation</p>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-brand-600 bg-white px-3 py-1 rounded-xl border border-brand-200" x-text="'Annual CTC: ₹' + Number(monthlyGross * 12).toLocaleString('en-IN')"></span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Monthly Gross Salary (₹) *</label>
+                        <input type="number" name="salary_structure[monthly_gross]" x-model="monthlyGross" @input="recalc()" required step="0.01" 
+                               class="w-full px-3.5 py-2.5 text-xs font-bold font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Basic Pay (50%)</label>
+                        <input type="number" name="salary_structure[basic_salary]" x-model="basicSalary" step="0.01" 
+                               class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">HRA (25%)</label>
+                        <input type="number" name="salary_structure[hra]" x-model="hra" step="0.01" 
+                               class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Special Allowance</label>
+                        <input type="number" name="salary_structure[special_allowance]" x-model="specialAllowance" step="0.01" 
+                               class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-brand-100/80">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">PF Deduction (₹)</label>
+                        <input type="number" name="salary_structure[pf_deduction]" x-model="pf" step="0.01" 
+                               class="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Professional Tax (PT) (₹)</label>
+                        <input type="number" name="salary_structure[professional_tax]" x-model="pt" step="0.01" 
+                               class="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Income Tax (TDS) (₹)</label>
+                        <input type="number" name="salary_structure[tds]" x-model="tds" step="0.01" 
+                               class="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" @click="activeTab = 'statutory'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'address'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Address</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('address')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Address Details</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: ADDRESS DETAILS -->
+        <div x-show="activeTab === 'address'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">5. Address Details</h3>
+                    <p class="text-xs text-slate-500">Communication & Permanent residential addresses</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 5 of 10</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Communication Address -->
+                <div class="bg-slate-50/70 p-6 rounded-2xl border border-slate-200/70 space-y-4">
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                        Communication / Mailing Address
+                    </h4>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Full Address</label>
+                        <textarea x-ref="comm_address" name="address_details[communication][address]" rows="3" placeholder="House/Flat No, Building, Street, Landmark" 
+                                  class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">{{ old('address_details.communication.address') }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">City</label>
+                            <input x-ref="comm_city" type="text" name="address_details[communication][city]" value="{{ old('address_details.communication.city') }}" placeholder="City" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">State</label>
+                            <input x-ref="comm_state" type="text" name="address_details[communication][state]" value="{{ old('address_details.communication.state') }}" placeholder="State" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">PIN Code</label>
+                            <input x-ref="comm_pincode" type="text" name="address_details[communication][pincode]" value="{{ old('address_details.communication.pincode') }}" placeholder="PIN" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permanent Address -->
+                <div class="bg-slate-50/70 p-6 rounded-2xl border border-slate-200/70 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                            Permanent Address
+                        </h4>
+                        <label class="inline-flex items-center gap-2 text-xs font-medium text-brand-600 cursor-pointer">
+                            <input type="checkbox" x-model="sameAddress" @change="copyAddress" 
+                                   class="rounded border-slate-300 text-brand-600 focus:ring-brand-500 h-4 w-4">
+                            <span>Same as Communication</span>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Full Address</label>
+                        <textarea x-ref="perm_address" name="address_details[permanent][address]" rows="3" placeholder="House/Flat No, Building, Street, Landmark" 
+                                  class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">{{ old('address_details.permanent.address') }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">City</label>
+                            <input x-ref="perm_city" type="text" name="address_details[permanent][city]" value="{{ old('address_details.permanent.city') }}" placeholder="City" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">State</label>
+                            <input x-ref="perm_state" type="text" name="address_details[permanent][state]" value="{{ old('address_details.permanent.state') }}" placeholder="State" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">PIN Code</label>
+                            <input x-ref="perm_pincode" type="text" name="address_details[permanent][pincode]" value="{{ old('address_details.permanent.pincode') }}" placeholder="PIN" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" @click="activeTab = 'bank'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'emergency'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Emergency</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('emergency')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Emergency & Ref</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 6: EMERGENCY / REFERENCE CONTACT -->
+        <div x-show="activeTab === 'emergency'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">6. Emergency / Reference Contact</h3>
+                    <p class="text-xs text-slate-500">Emergency reach-out contact and professional reference checks</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 6 of 10</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Emergency Contact -->
+                <div class="bg-slate-50/70 p-6 rounded-2xl border border-slate-200/70 space-y-4">
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        Emergency Contact
+                    </h4>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Contact Name</label>
+                        <input type="text" name="emergency_contact[name]" value="{{ old('emergency_contact.name') }}" placeholder="Full Name" 
+                               class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Mobile Number</label>
+                            <input type="text" name="emergency_contact[mobile]" value="{{ old('emergency_contact.mobile') }}" placeholder="+91 9876543210" 
+                                   class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Relation</label>
+                            <input type="text" name="emergency_contact[relation]" value="{{ old('emergency_contact.relation') }}" placeholder="e.g. Father, Spouse, Brother" 
+                                   class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Address</label>
+                        <input type="text" name="emergency_contact[address]" value="{{ old('emergency_contact.address') }}" placeholder="Full Residential Address" 
+                               class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                </div>
+
+                <!-- Professional Reference -->
+                <div class="bg-slate-50/70 p-6 rounded-2xl border border-slate-200/70 space-y-4">
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                        Professional / Personal Reference
+                    </h4>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Reference Name</label>
+                        <input type="text" name="reference_contact[name]" value="{{ old('reference_contact.name') }}" placeholder="Reference Name" 
+                               class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Mobile Number</label>
+                            <input type="text" name="reference_contact[mobile]" value="{{ old('reference_contact.mobile') }}" placeholder="+91 9876543210" 
+                                   class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Relation / Association</label>
+                            <input type="text" name="reference_contact[relation]" value="{{ old('reference_contact.relation') }}" placeholder="Ex-Manager, Colleague" 
+                                   class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Reference Checked By</label>
+                            <input type="text" name="reference_contact[checked_by]" value="{{ old('reference_contact.checked_by', Auth::user()->name) }}" 
+                                   class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Reference Check Date</label>
+                            <input type="date" name="reference_contact[check_date]" value="{{ old('reference_contact.check_date', date('Y-m-d')) }}" 
+                                   class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Remarks</label>
+                        <input type="text" name="reference_contact[remarks]" value="{{ old('reference_contact.remarks') }}" placeholder="Feedback / comments from reference" 
+                               class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" @click="activeTab = 'address'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'nominee'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Nominee</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('nominee')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Nominee Details</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 7: NOMINEE DETAILS -->
+        <div x-show="activeTab === 'nominee'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">7. Nominee Details</h3>
+                    <p class="text-xs text-slate-500">Statutory nominee information and nominee bank account</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 7 of 10</span>
+            </div>
+
+            <!-- Nominee Personal Details -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Name</label>
+                    <input type="text" name="nominee_details[name]" value="{{ old('nominee_details.name') }}" placeholder="Full Name of Nominee" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Relation</label>
+                    <input type="text" name="nominee_details[relation]" value="{{ old('nominee_details.relation') }}" placeholder="e.g. Spouse, Mother, Father" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Date of Birth</label>
+                    <input type="date" name="nominee_details[dob]" value="{{ old('nominee_details.dob') }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Aadhaar-Linked Mobile</label>
+                    <input type="text" name="nominee_details[aadhaar_mobile]" value="{{ old('nominee_details.aadhaar_mobile') }}" placeholder="+91 9876543210" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Aadhaar Number</label>
+                    <input type="text" name="nominee_details[aadhaar]" value="{{ old('nominee_details.aadhaar') }}" placeholder="1234 5678 9012" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee PAN Number</label>
+                    <input type="text" name="nominee_details[pan]" value="{{ old('nominee_details.pan') }}" placeholder="ABCDE1234F" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono uppercase rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Occupation</label>
+                    <input type="text" name="nominee_details[occupation]" value="{{ old('nominee_details.occupation') }}" placeholder="e.g. Homemaker, Employed, Business" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Details Cross-Checked By</label>
+                    <input type="text" name="nominee_details[verified_by]" value="{{ old('nominee_details.verified_by', Auth::user()->name) }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Date of Verification</label>
+                    <input type="date" name="nominee_details[verification_date]" value="{{ old('nominee_details.verification_date', date('Y-m-d')) }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <!-- Nominee Bank Details -->
+            <div class="mt-4 p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                    Nominee Bank Account Details
+                </h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Bank Name</label>
+                        <input type="text" name="nominee_details[bank_name]" value="{{ old('nominee_details.bank_name') }}" placeholder="Bank Name" 
+                               class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Account Holder Name</label>
+                        <input type="text" name="nominee_details[account_holder]" value="{{ old('nominee_details.account_holder') }}" placeholder="Account Holder Name" 
+                               class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Account Number</label>
+                        <input type="text" name="nominee_details[account_number]" value="{{ old('nominee_details.account_number') }}" placeholder="Account Number" 
+                               class="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">IFSC Code</label>
+                        <input type="text" name="nominee_details[ifsc_code]" value="{{ old('nominee_details.ifsc_code') }}" placeholder="IFSC Code" 
+                               class="w-full px-3 py-2 text-xs font-mono uppercase rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Branch Name</label>
+                        <input type="text" name="nominee_details[branch_name]" value="{{ old('nominee_details.branch_name') }}" placeholder="Branch Name" 
+                               class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Account Type</label>
+                        <select name="nominee_details[account_type]" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                            <option value="Savings">Savings</option>
+                            <option value="Current">Current</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" @click="activeTab = 'emergency'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'family'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Family</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('family')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Family Members</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 8: FAMILY MEMBER DETAILS -->
+        <div x-show="activeTab === 'family'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">8. Family Member Details</h3>
+                    <p class="text-xs text-slate-500">Family details for ESIC medical benefit and group insurance</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 8 of 10</span>
+            </div>
+
+            @for ($i = 1; $i <= 3; $i++)
+                <div class="p-6 rounded-2xl bg-slate-50/70 border border-slate-200/70 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-brand-600 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">{{ $i }}</span>
+                        Family Member {{ $i }}
+                    </h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Name</label>
+                            <input type="text" name="family_members[{{ $i }}][name]" value="{{ old("family_members.{$i}.name") }}" placeholder="Name" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Relation</label>
+                            <input type="text" name="family_members[{{ $i }}][relation]" value="{{ old("family_members.{$i}.relation") }}" placeholder="e.g. Father/Mother/Child" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Date of Birth</label>
+                            <input type="date" name="family_members[{{ $i }}][dob]" value="{{ old("family_members.{$i}.dob") }}" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Aadhaar-Linked Mobile</label>
+                            <input type="text" name="family_members[{{ $i }}][aadhaar_mobile]" value="{{ old("family_members.{$i}.aadhaar_mobile") }}" placeholder="+91 9876543210" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Aadhaar Number</label>
+                            <input type="text" name="family_members[{{ $i }}][aadhaar]" value="{{ old("family_members.{$i}.aadhaar") }}" placeholder="1234 5678 9012" 
+                                   class="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">PAN Number</label>
+                            <input type="text" name="family_members[{{ $i }}][pan]" value="{{ old("family_members.{$i}.pan") }}" placeholder="PAN Number" 
+                                   class="w-full px-3 py-2 text-xs font-mono uppercase rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Occupation</label>
+                            <input type="text" name="family_members[{{ $i }}][occupation]" value="{{ old("family_members.{$i}.occupation") }}" placeholder="Occupation" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Details Cross-Checked By</label>
+                            <input type="text" name="family_members[{{ $i }}][checked_by]" value="{{ old("family_members.{$i}.checked_by", Auth::user()->name) }}" 
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        </div>
+                    </div>
+                </div>
+            @endfor
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" @click="activeTab = 'nominee'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'docs'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Documents</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('docs')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Documents Checklist</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 9: DOCUMENT SUBMISSION CHECKLIST -->
+        <div x-show="activeTab === 'docs'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">9. Document Submission Checklist</h3>
+                    <p class="text-xs text-slate-500">Track mandatory physical/digital verification documents</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 9 of 10</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                @php
+                    $checklists = [
+                        'aadhaar_card' => 'Aadhaar Card (Employee + Nominee + Family Member)',
+                        'pan_card' => 'PAN Card (Employee + Nominee + Family Member)',
+                        'bank_proof' => 'Bank Proof / Cancelled Cheque (Employee + Nominee + Family Member)',
+                        'passport_photo' => 'Passport Size Photograph (Employee + Nominee + Family Member)',
+                        'address_proof' => 'Address Proof (Electricity / Rent Agreement / Voter ID)',
+                        'pf_uan' => 'PF / UAN Details',
+                        'esic_details' => 'ESIC Details',
+                        'family_photo' => 'Family Photo For ESIC',
+                    ];
+                @endphp
+
+                @foreach ($checklists as $key => $label)
+                    <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200/80 hover:border-brand-300 hover:bg-brand-50/20 transition cursor-pointer">
+                        <input type="checkbox" name="document_checklist[{{ $key }}]" value="Received" 
+                               {{ old("document_checklist.{$key}") ? 'checked' : '' }}
+                               class="rounded border-slate-300 text-brand-600 focus:ring-brand-500 h-5 w-5 mt-0.5">
+                        <span class="text-xs font-medium text-slate-700 leading-relaxed">{{ $label }}</span>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="pt-2">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Other Documents / Notes</label>
+                <input type="text" name="document_checklist[other]" value="{{ old('document_checklist.other') }}" placeholder="e.g. Relieving Letter, Degree Certificates, Experience Letter" 
+                       class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" @click="activeTab = 'family'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="activeTab = 'assets'" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        <span>Skip to Assets</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <button type="button" @click="submitWithNextTab('assets')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save & Next: Asset Details</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 10: ASSET / DEVICE DETAILS & SUBMIT -->
+        <div x-show="activeTab === 'assets'" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">10. Asset / Device Details</h3>
+                    <p class="text-xs text-slate-500">Hardware and inventory allocation records</p>
+                </div>
+                <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Final Step</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Laptop / PC Model</label>
+                    <input type="text" name="asset_details[laptop_pc]" value="{{ old('asset_details.laptop_pc') }}" placeholder="e.g. Dell Latitude 5420 / MacBook Pro" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Asset ID</label>
+                    <input type="text" name="asset_details[asset_id]" value="{{ old('asset_details.asset_id') }}" placeholder="e.g. AST-IT-0089" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Serial Number</label>
+                    <input type="text" name="asset_details[serial_number]" value="{{ old('asset_details.serial_number') }}" placeholder="e.g. SN-8921839210" 
+                           class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mobile / SIM Allocated</label>
+                    <input type="text" name="asset_details[mobile_sim]" value="{{ old('asset_details.mobile_sim') }}" placeholder="SIM number / Mobile model" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Office Phone Number</label>
+                    <input type="text" name="asset_details[office_phone]" value="{{ old('asset_details.office_phone') }}" placeholder="Phone / CUG Number" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Other Assets</label>
+                    <input type="text" name="asset_details[other_asset]" value="{{ old('asset_details.other_asset') }}" placeholder="Headphones, Monitor, ID Card" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Asset Handover Date</label>
+                    <input type="date" name="asset_details[handover_date]" value="{{ old('asset_details.handover_date', date('Y-m-d')) }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Asset Handover By</label>
+                    <input type="text" name="asset_details[handover_by]" value="{{ old('asset_details.handover_by', Auth::user()->name) }}" 
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <!-- Final Submission Confirmation Box -->
+            <div class="p-5 rounded-2xl bg-brand-50 border border-brand-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                <div>
+                    <div class="text-xs font-bold text-brand-800">Ready to Complete Onboarding?</div>
+                    <div class="text-xs text-brand-600 mt-0.5">All 10 sections will be validated and saved to the HRMS Master Database.</div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="activeTab = 'docs'" class="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition border border-slate-200">Back</button>
+                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold tracking-wide shadow-lg shadow-brand-500/30 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        <span>Save Employee Master Data</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</x-hrms-layout>

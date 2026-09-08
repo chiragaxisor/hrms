@@ -804,22 +804,47 @@
                     </div>
 
                     <!-- Modal Actions Footer -->
-                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                        <button type="button" @click="closePunchModal()" 
-                                class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                            Cancel
-                        </button>
-                        <button type="submit" 
-                                :disabled="isSubmitting || (settingsRequireCamera && !capturedPhoto) || (settingsRequireGeofence && !isLocationVerified)"
-                                :class="{ 'opacity-50 cursor-not-allowed': isSubmitting || (settingsRequireCamera && !capturedPhoto) || (settingsRequireGeofence && !isLocationVerified) }"
-                                class="px-6 py-2.5 rounded-xl text-white text-xs font-black shadow-lg transition"
-                                :class="punchThemeClass">
-                            <span x-show="!isSubmitting">✓ Confirm & Verify Punch</span>
-                            <span x-show="isSubmitting" class="flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" class="opacity-75"></path></svg>
-                                <span>Verifying & Saving...</span>
-                            </span>
-                        </button>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                        <!-- Helpful status hint if disabled -->
+                        <div class="text-[11px] font-semibold text-slate-500">
+                            <template x-if="settingsRequireCamera && !capturedPhoto">
+                                <span class="inline-flex items-center gap-1.5 text-amber-600">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                    <span>📸 Please capture your face photo to enable punch</span>
+                                </span>
+                            </template>
+                            <template x-if="!(settingsRequireCamera && !capturedPhoto) && (settingsRequireGeofence && !isLocationVerified)">
+                                <span class="inline-flex items-center gap-1.5 text-rose-600">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                    <span>📍 Outside office radius (waiting for GPS)</span>
+                                </span>
+                            </template>
+                            <template x-if="(!settingsRequireCamera || capturedPhoto) && (!settingsRequireGeofence || isLocationVerified)">
+                                <span class="inline-flex items-center gap-1.5 text-emerald-600">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span>Ready to verify and submit</span>
+                                </span>
+                            </template>
+                        </div>
+
+                        <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                            <button type="button" @click="closePunchModal()" 
+                                    class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    :disabled="isSubmitting || (settingsRequireCamera && !capturedPhoto) || (settingsRequireGeofence && !isLocationVerified)"
+                                    class="px-6 py-2.5 rounded-xl text-xs font-black shadow-md transition flex items-center justify-center gap-1.5 min-w-[170px]"
+                                    :class="(isSubmitting || (settingsRequireCamera && !capturedPhoto) || (settingsRequireGeofence && !isLocationVerified))
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300 shadow-none'
+                                        : (punchThemeClass ? punchThemeClass + ' text-white hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]' : 'bg-brand-500 hover:bg-brand-600 text-white')">
+                                <span x-show="!isSubmitting">✓ Confirm & Verify Punch</span>
+                                <span x-show="isSubmitting" class="flex items-center gap-1.5 text-white">
+                                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" class="opacity-75"></path></svg>
+                                    <span>Verifying & Saving...</span>
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -929,8 +954,8 @@
 
                 updateClock() {
                     const now = new Date();
-                    this.liveTimeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-                    this.liveDateString = now.toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+                    this.liveTimeString = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                    this.liveDateString = now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
                 },
 
                 formatTime(t) {

@@ -35,6 +35,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Employee Self-Service: Edit own employee master data (all 10 steps)
+    Route::get('/my-employee-data', [ProfileController::class, 'employeeEdit'])->name('profile.employee-edit');
+    Route::patch('/my-employee-data', [ProfileController::class, 'employeeUpdate'])->name('profile.employee-update');
+
     // HR Administrator & Superadmin Only Routes
     Route::middleware(['admin'])->group(function () {
         Route::resource('departments', DepartmentController::class)->except(['create', 'show', 'edit']);

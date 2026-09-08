@@ -266,14 +266,19 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label for="office_latitude" class="block text-xs font-bold text-slate-700 mb-1">Office Latitude (e.g. 23.0225) *</label>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="office_latitude" class="block text-xs font-bold text-slate-700">Office Latitude *</label>
+                                <button type="button" onclick="detectCurrentLocation()" class="text-[10px] text-brand-600 hover:text-brand-700 font-bold underline cursor-pointer">
+                                    📍 Set to My Current GPS
+                                </button>
+                            </div>
                             <input type="text" name="office_latitude" id="office_latitude" value="{{ old('office_latitude', $settings['office_latitude'] ?? '23.0225') }}"
                                    class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-brand-500 font-mono">
                             <span class="text-[10px] text-slate-400 mt-1 block">GPS coordinates for office center point</span>
                         </div>
 
                         <div>
-                            <label for="office_longitude" class="block text-xs font-bold text-slate-700 mb-1">Office Longitude (e.g. 72.5714) *</label>
+                            <label for="office_longitude" class="block text-xs font-bold text-slate-700 mb-1">Office Longitude *</label>
                             <input type="text" name="office_longitude" id="office_longitude" value="{{ old('office_longitude', $settings['office_longitude'] ?? '72.5714') }}"
                                    class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-brand-500 font-mono">
                             <span class="text-[10px] text-slate-400 mt-1 block">GPS coordinates for office center point</span>
@@ -281,9 +286,9 @@
 
                         <div>
                             <label for="geofence_radius_meters" class="block text-xs font-bold text-slate-700 mb-1">Geofence Radius (Meters) *</label>
-                            <input type="number" name="geofence_radius_meters" id="geofence_radius_meters" required min="10" max="50000" value="{{ old('geofence_radius_meters', $settings['geofence_radius_meters'] ?? '250') }}"
+                            <input type="number" name="geofence_radius_meters" id="geofence_radius_meters" required min="10" max="500000" value="{{ old('geofence_radius_meters', $settings['geofence_radius_meters'] ?? '250') }}"
                                    class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-brand-500 font-mono">
-                            <span class="text-[10px] text-slate-400 mt-1 block">Maximum allowed distance (e.g. 250m)</span>
+                            <span class="text-[10px] text-slate-400 mt-1 block">Maximum allowed distance (e.g. 250m or 500m)</span>
                         </div>
                     </div>
 
@@ -553,4 +558,20 @@
             </div>
         @endif
     </div>
+
+    <script>
+        function detectCurrentLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                document.getElementById('office_latitude').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('office_longitude').value = pos.coords.longitude.toFixed(6);
+                alert('Successfully detected current coordinates: ' + pos.coords.latitude.toFixed(4) + ', ' + pos.coords.longitude.toFixed(4) + '. Click "Save Changes" to apply.');
+            }, function(err) {
+                alert('Error getting GPS location: ' + err.message + '. Please ensure location permission is allowed.');
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        }
+    </script>
 </x-hrms-layout>

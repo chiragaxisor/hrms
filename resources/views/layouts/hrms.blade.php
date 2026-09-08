@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Axisor InfoTech') }} - @yield('title', 'HRMS Portal')</title>
+    <title>{{ $globalCompanyName ?? config('app.name') }} - @yield('title', 'HRMS Portal')</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
     <!-- Fonts -->
@@ -47,9 +47,9 @@
         <!-- Brand Header -->
         <div class="h-20 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-xs relative z-10">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
-                <img src="{{ asset('images/logo.png') }}" alt="Axisor InfoTech" class="w-11 h-11 rounded-2xl shadow-lg shadow-brand-500/25 object-contain bg-black p-0.5 border border-white/10 group-hover:scale-105 transition shrink-0">
+                <img src="{{ asset('images/logo.png') }}" alt="{{ $globalCompanyName ?? config('app.name') }}" class="w-11 h-11 rounded-2xl shadow-lg shadow-brand-500/25 object-contain bg-black p-0.5 border border-white/10 group-hover:scale-105 transition shrink-0">
                 <div class="min-w-0">
-                    <span class="text-base font-black tracking-tight text-white block truncate leading-tight">Axisor <span class="text-brand-500">InfoTech</span></span>
+                    <span class="text-base font-black tracking-tight text-white block truncate leading-tight">{{ $globalCompanyName ?? config('app.name') }}</span>
                     <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mt-0.5">HRMS Enterprise</span>
                 </div>
             </a>
@@ -263,6 +263,16 @@
                 </svg>
                 <span>{{ Auth::user()->isAdmin() ? 'Admin Profile' : 'My Profile & Password' }}</span>
             </a>
+
+            @if (Auth::user()->employee)
+            <a href="{{ route('profile.employee-edit') }}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('profile.employee-edit') ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/30' : 'text-slate-300 hover:bg-white/5 hover:text-white' }} transition">
+                <svg class="w-5 h-5 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>My Employee Data</span>
+            </a>
+            @endif
         </nav>
 
         <!-- Footer Log Out -->
@@ -355,15 +365,17 @@
 
         <!-- Clean Authenticated Footer -->
         <footer class="py-4 px-4 sm:px-8 border-t border-slate-200/80 bg-white text-slate-500 text-xs flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p>&copy; {{ date('Y') }} <a href="https://axisor.co/" target="_blank" rel="noopener noreferrer" class="text-brand-600 hover:text-brand-700 font-semibold underline decoration-brand-500/30 underline-offset-2">Axisor InfoTech</a>. All rights reserved.</p>
+            <p>&copy; {{ date('Y') }} <a href="{{ $globalCompanyWebsite ?: '#' }}" target="_blank" rel="noopener noreferrer" class="text-brand-600 hover:text-brand-700 font-semibold underline decoration-brand-500/30 underline-offset-2">{{ $globalCompanyName ?? config('app.name') }}</a>. All rights reserved.</p>
             <div class="flex items-center gap-3 text-[11px] text-slate-400">
-                <a href="https://axisor.co/" target="_blank" rel="noopener noreferrer" class="hover:text-brand-600 font-medium transition flex items-center gap-1">
-                    <span>https://axisor.co/</span>
+                @if (!empty($globalCompanyWebsite))
+                <a href="{{ $globalCompanyWebsite }}" target="_blank" rel="noopener noreferrer" class="hover:text-brand-600 font-medium transition flex items-center gap-1">
+                    <span>{{ $globalCompanyWebsite }}</span>
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
                 </a>
                 <span>•</span>
+                @endif
                 <span>HRMS Portal v2.0</span>
             </div>
         </footer>

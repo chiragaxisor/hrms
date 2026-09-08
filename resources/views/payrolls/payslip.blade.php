@@ -35,14 +35,19 @@
         
         <!-- Company Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-900 pb-6">
-            <div class="flex items-center gap-3.5">
-                <img src="{{ asset('images/logo.png') }}" alt="Axisor InfoTech" class="w-12 h-12 rounded-2xl shadow-md object-contain bg-black p-0.5 border border-slate-200 shrink-0">
+                <div class="flex items-center gap-3.5">
+                <img src="{{ asset('images/logo.png') }}" alt="{{ $globalCompanyName ?? config('app.name') }}" class="w-12 h-12 rounded-2xl shadow-md object-contain bg-black p-0.5 border border-slate-200 shrink-0">
                 <div>
-                    <h1 class="text-xl font-black text-slate-900 tracking-tight">Axisor <span class="text-brand-500">InfoTech</span></h1>
-                    <p class="text-xs text-slate-500 mt-0.5">Corporate Headquarters, Tech Park, Gujarat, India</p>
-                    <p class="text-[11px] text-slate-400">HRMS Enterprise Portal | info@axisorinfotech.com</p>
+                    <h1 class="text-xl font-black text-slate-900 tracking-tight">{{ $globalCompanyName ?? config('app.name') }}</h1>
+                    @if (!empty($globalCompanyAddress))
+                        <p class="text-xs text-slate-500 mt-0.5">{{ $globalCompanyAddress }}</p>
+                    @endif
+                    @if (!empty($globalCompanyEmail))
+                        <p class="text-[11px] text-slate-400">{{ $globalCompanyEmail }}{{ !empty($globalCompanyPhone) ? ' | ' . $globalCompanyPhone : '' }}</p>
+                    @endif
                 </div>
             </div>
+
 
             <div class="text-left sm:text-right">
                 <span class="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-brand-50 text-brand-600 border border-brand-100">

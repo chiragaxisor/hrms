@@ -4,9 +4,9 @@
         <!-- Logo & Header -->
         <div class="mb-6 text-center sm:text-left">
             <div class="flex items-center justify-center sm:justify-start gap-3 mb-3">
-                <img src="{{ asset('images/logo.png') }}" alt="Axisor InfoTech Logo" class="w-12 h-12 rounded-2xl shadow-md shadow-brand-500/20 object-contain bg-black p-0.5 border border-slate-200/80">
+                <img src="{{ asset('images/logo.png') }}" alt="{{ $globalCompanyName ?? config('app.name') }} Logo" class="w-12 h-12 rounded-2xl shadow-md shadow-brand-500/20 object-contain bg-black p-0.5 border border-slate-200/80">
                 <div class="text-left">
-                    <span class="text-xs font-bold text-brand-600 uppercase tracking-wider block">Axisor InfoTech</span>
+                    <span class="text-xs font-bold text-brand-600 uppercase tracking-wider block">{{ $globalCompanyName ?? config('app.name') }}</span>
                     <span class="text-xs text-slate-400 font-medium block">Human Resource Management</span>
                 </div>
             </div>

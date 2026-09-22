@@ -42,7 +42,7 @@
         <!-- Spinner Icon & Logo -->
         <div class="relative flex items-center justify-center w-16 h-16 mb-4">
             <div class="absolute inset-0 rounded-full border-4 border-brand-500/20 border-t-brand-500 animate-spin"></div>
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-8 h-8 rounded-lg object-contain bg-black p-0.5 border border-white/10 shadow-sm">
+            
         </div>
         
         <div class="relative text-center">

@@ -41,13 +41,13 @@ class DatabaseSeeder extends Seeder
         // Seed Master Departments & Designations
         $this->call(DepartmentSeeder::class);
 
-        // Seed Axisor InfoTech Company & System Settings
+        // Seed HRMS Company & System Settings
         $settings = [
             // Company
-            ['key' => 'company_name', 'value' => 'Axisor InfoTech', 'group' => 'company', 'type' => 'string'],
-            ['key' => 'company_email', 'value' => 'contact@axisor.co', 'group' => 'company', 'type' => 'string'],
+            ['key' => 'company_name', 'value' => 'HRMS', 'group' => 'company', 'type' => 'string'],
+            ['key' => 'company_email', 'value' => 'contact@hrms.com', 'group' => 'company', 'type' => 'string'],
             ['key' => 'company_phone', 'value' => '+91 98765 43210', 'group' => 'company', 'type' => 'string'],
-            ['key' => 'company_website', 'value' => 'https://axisor.co', 'group' => 'company', 'type' => 'string'],
+            ['key' => 'company_website', 'value' => 'https://hrms.com', 'group' => 'company', 'type' => 'string'],
             ['key' => 'company_tax_id', 'value' => 'GSTIN24ABCDE1234F1Z5', 'group' => 'company', 'type' => 'string'],
             ['key' => 'company_cin', 'value' => 'U72900GJ2026PTC123456', 'group' => 'company', 'type' => 'string'],
             ['key' => 'company_address', 'value' => 'Ahmedabad, Gujarat, India', 'group' => 'company', 'type' => 'string'],

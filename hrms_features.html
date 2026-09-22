@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HRMS Feature List</title>
+<style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+    h1 { color: #333; text-align: center; }
+    h2 { color: #444; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    ul { list-style-type: disc; margin-left: 20px; }
+    li { margin-bottom: 10px; }
+    p { margin-bottom: 15px; }
+</style>
+</head>
+<body>
+
+<h1>HRMS (Human Resource Management System) - Detailed Feature List</h1>
+
+<h2>1. User Management & Authentication</h2>
+<ul>
+    <li><strong>Secure Login & Registration:</strong> Role-based access (Admin, Employee, HR, etc.).</li>
+    <li><strong>API Token Authentication:</strong> For mobile app integration (using Laravel Sanctum or Passport).</li>
+    <li><strong>Profile Management:</strong> Employees can update their personal details, contact info, and profile pictures.</li>
+</ul>
+
+<h2>2. Employee Management</h2>
+<ul>
+    <li><strong>Employee Onboarding:</strong> Add new employees with detailed personal and professional information.</li>
+    <li><strong>Employee Directory:</strong> View the list of all employees and their statuses.</li>
+    <li><strong>Status Tracking:</strong> Manage active/inactive employee statuses.</li>
+</ul>
+
+<h2>3. Department & Designation Management</h2>
+<ul>
+    <li><strong>Departments:</strong> Create, update, and manage various departments within the organization (e.g., IT, HR, Sales).</li>
+    <li><strong>Designations:</strong> Manage job titles and roles associated with departments.</li>
+</ul>
+
+<h2>4. Attendance Management</h2>
+<ul>
+    <li><strong>Check-In / Check-Out:</strong> Employees can mark their attendance with timestamps.</li>
+    <li><strong>Break Timings:</strong> Track employee breaks during the workday.</li>
+    <li><strong>Geofencing Support:</strong> Location-based attendance marking (ensures employees are at the office/worksite).</li>
+    <li><strong>Face Photo Verification:</strong> Capture photos during attendance for enhanced security and validation.</li>
+</ul>
+
+<h2>5. Leave Management</h2>
+<ul>
+    <li><strong>Leave Requests:</strong> Employees can apply for different types of leaves (Sick, Casual, Earned, etc.).</li>
+    <li><strong>Leave Approval Workflow:</strong> Admins or Managers can approve or reject leave requests.</li>
+    <li><strong>Leave Balance Tracking:</strong> Keep track of consumed and available leave quotas.</li>
+</ul>
+
+<h2>6. Daily Work Reports (DWR)</h2>
+<ul>
+    <li><strong>Task Submission:</strong> Employees can submit daily reports detailing their tasks and accomplishments.</li>
+    <li><strong>Custom Fields:</strong> Support for custom reporting formats or specific project-related fields.</li>
+    <li><strong>Review & Feedback:</strong> Managers can review and track daily productivity.</li>
+</ul>
+
+<h2>7. Payroll & Salary Management</h2>
+<ul>
+    <li><strong>Salary Structures:</strong> Define and manage base salary, allowances, deductions, and bonuses.</li>
+    <li><strong>Payroll Processing:</strong> Generate monthly payroll calculations based on attendance and leave records.</li>
+    <li><strong>Payslip Generation:</strong> Ability to view and download salary slips.</li>
+</ul>
+
+<h2>8. System Settings & Configuration</h2>
+<ul>
+    <li><strong>Global Settings:</strong> Configure company details, timezones, working hours, and email settings.</li>
+    <li><strong>Role & Permissions (Implicit):</strong> Manage system configurations and operational defaults.</li>
+</ul>
+
+<h2>9. Comprehensive API (For Mobile/Web Apps)</h2>
+<ul>
+    <li><strong>API Endpoints:</strong> Ready-to-use APIs for authentication, attendance, leave requests, and reports, making the system fully compatible with Android/iOS applications.</li>
+</ul>
+
+</body>
+</html>

@@ -47,7 +47,7 @@
         <!-- Brand Header -->
         <div class="h-20 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-xs relative z-10">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
-                <img src="{{ asset('images/logo.png') }}" alt="{{ $globalCompanyName ?? config('app.name') }}" class="w-11 h-11 rounded-2xl shadow-lg shadow-brand-500/25 object-contain bg-black p-0.5 border border-white/10 group-hover:scale-105 transition shrink-0">
+                
                 <div class="min-w-0">
                     <span class="text-base font-black tracking-tight text-white block truncate leading-tight">{{ $globalCompanyName ?? config('app.name') }}</span>
                     <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mt-0.5">HRMS Enterprise</span>
@@ -439,7 +439,7 @@
         <!-- Spinner Icon & Logo -->
         <div class="relative flex items-center justify-center w-16 h-16 mb-4">
             <div class="absolute inset-0 rounded-full border-4 border-brand-500/20 border-t-brand-500 animate-spin"></div>
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-8 h-8 rounded-lg object-contain bg-black p-0.5 border border-white/10 shadow-sm">
+            
         </div>
         
         <div class="relative text-center">

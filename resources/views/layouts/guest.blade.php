@@ -32,7 +32,7 @@
             <!-- Top Minimal Navbar Brand -->
             <header class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <img src="{{ asset('images/logo.png') }}" alt="{{ $globalCompanyName ?? config('app.name') }} Logo" class="w-10 h-10 rounded-xl shadow-lg shadow-brand-500/20 object-contain border border-white/10 bg-black">
+                    
                     <div>
                         <span class="text-white font-black text-lg tracking-tight">{{ $globalCompanyName ?? config('app.name') }}</span>
                         <span class="hidden sm:inline-block text-[10px] text-slate-400 uppercase tracking-widest ml-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 font-semibold">HRMS Portal</span>
@@ -85,7 +85,7 @@
         <!-- Spinner Icon & Logo -->
         <div class="relative flex items-center justify-center w-16 h-16 mb-4">
             <div class="absolute inset-0 rounded-full border-4 border-brand-500/20 border-t-brand-500 animate-spin"></div>
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-8 h-8 rounded-lg object-contain bg-black p-0.5 border border-white/10 shadow-sm">
+            
         </div>
         
         <div class="relative text-center">

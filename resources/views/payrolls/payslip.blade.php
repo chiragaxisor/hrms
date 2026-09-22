@@ -36,7 +36,7 @@
         <!-- Company Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-900 pb-6">
                 <div class="flex items-center gap-3.5">
-                <img src="{{ asset('images/logo.png') }}" alt="{{ $globalCompanyName ?? config('app.name') }}" class="w-12 h-12 rounded-2xl shadow-md object-contain bg-black p-0.5 border border-slate-200 shrink-0">
+                
                 <div>
                     <h1 class="text-xl font-black text-slate-900 tracking-tight">{{ $globalCompanyName ?? config('app.name') }}</h1>
                     @if (!empty($globalCompanyAddress))

@@ -1,6 +1,25 @@
 <x-hrms-layout>
     @section('page_title', 'My Employee Data')
 
+    @php
+        $formData = $formData ?? \App\Support\EmployeeFormData::all($employee->id);
+        $bloodGroups = $bloodGroups ?? $formData['bloodGroups'];
+        $workLocations = $workLocations ?? $formData['workLocations'];
+        $branches = $branches ?? $formData['branches'];
+        $banks = $banks ?? $formData['banks'];
+        $states = $states ?? $formData['states'];
+        $cities = $cities ?? $formData['cities'];
+        $emergencyRelations = $emergencyRelations ?? $formData['emergencyRelations'];
+        $referenceRelations = $referenceRelations ?? $formData['referenceRelations'];
+        $nomineeRelations = $nomineeRelations ?? $formData['nomineeRelations'];
+        $familyRelations = $familyRelations ?? $formData['familyRelations'];
+        $occupations = $occupations ?? $formData['occupations'];
+        $laptopModels = $laptopModels ?? $formData['laptopModels'];
+        $simOptions = $simOptions ?? $formData['simOptions'];
+        $reportingPersons = $reportingPersons ?? $formData['reportingPersons'];
+        $verifiers = $verifiers ?? $formData['verifiers'];
+    @endphp
+
     <!-- Breadcrumb & Header -->
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -68,8 +87,9 @@
                   if (this.sameAddress) {
                       $refs.perm_address.value = $refs.comm_address.value;
                       $refs.perm_city.value    = $refs.comm_city.value;
-                      $refs.perm_state.value   = $refs.comm_state.value;
                       $refs.perm_pin.value     = $refs.comm_pin.value;
+                      const commStateVal = document.querySelector('input[name="address_details[communication][state]"]')?.value || '';
+                      window.dispatchEvent(new CustomEvent('sync-perm-state', { detail: commStateVal }));
                   }
               },
               submitWithNextTab(nextTab) {
@@ -206,8 +226,13 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Blood Group</label>
-                    <input type="text" name="blood_group" value="{{ old('blood_group', $employee->blood_group) }}"
-                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                    <select name="blood_group" 
+                            class="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        <option value="">-- Select Blood Group --</option>
+                        @foreach ($bloodGroups as $bg)
+                            <option value="{{ $bg }}" {{ old('blood_group', $employee->blood_group) === $bg ? 'selected' : '' }}>{{ $bg }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">PAN Number</label>
@@ -295,8 +320,17 @@
                 <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 4 of 10</span>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Bank Name</label>
+                    <x-searchable-select 
+                        name="bank_details[bank_name]" 
+                        :value="old('bank_details.bank_name', $bank['bank_name'] ?? '')" 
+                        :options="$banks" 
+                        placeholder="Search bank name (e.g. HDFC, SBI)..." 
+                        :allowCustom="true" 
+                    />
+                </div>
                 @foreach ([
-                    'bank_name'       => ['Bank Name',           'text',  false],
                     'account_holder'  => ['Account Holder Name', 'text',  false],
                     'account_number'  => ['Account Number',      'text',  true],
                     'ifsc_code'       => ['IFSC Code',           'text',  true],
@@ -350,13 +384,18 @@
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">City</label>
-                            <input x-ref="comm_city" type="text" name="address_details[communication][city]" value="{{ old('address_details.communication.city', $addr['communication']['city'] ?? '') }}"
+                            <input x-ref="comm_city" type="text" name="address_details[communication][city]" value="{{ old('address_details.communication.city', $addr['communication']['city'] ?? '') }}" list="indian_cities_list_self" placeholder="City"
                                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">State</label>
-                            <input x-ref="comm_state" type="text" name="address_details[communication][state]" value="{{ old('address_details.communication.state', $addr['communication']['state'] ?? '') }}"
-                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                            <x-searchable-select 
+                                name="address_details[communication][state]" 
+                                :value="old('address_details.communication.state', $addr['communication']['state'] ?? '')" 
+                                :options="$states" 
+                                placeholder="Search state / UT..." 
+                                :allowCustom="true" 
+                            />
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">PIN Code</label>
@@ -381,13 +420,19 @@
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">City</label>
-                            <input x-ref="perm_city" type="text" name="address_details[permanent][city]" value="{{ old('address_details.permanent.city', $addr['permanent']['city'] ?? '') }}"
+                            <input x-ref="perm_city" type="text" name="address_details[permanent][city]" value="{{ old('address_details.permanent.city', $addr['permanent']['city'] ?? '') }}" list="indian_cities_list_self" placeholder="City"
                                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">State</label>
-                            <input x-ref="perm_state" type="text" name="address_details[permanent][state]" value="{{ old('address_details.permanent.state', $addr['permanent']['state'] ?? '') }}"
-                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                            <x-searchable-select 
+                                name="address_details[permanent][state]" 
+                                :value="old('address_details.permanent.state', $addr['permanent']['state'] ?? '')" 
+                                :options="$states" 
+                                placeholder="Search state / UT..." 
+                                :allowCustom="true" 
+                                eventSync="sync-perm-state"
+                            />
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">PIN Code</label>
@@ -397,6 +442,13 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Cities Datalist Autocomplete -->
+            <datalist id="indian_cities_list_self">
+                @foreach ($cities as $cityName)
+                    <option value="{{ $cityName }}"></option>
+                @endforeach
+            </datalist>
             <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                 <button type="button" @click="activeTab = 'bank'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>
                 <div class="flex items-center gap-2.5">
@@ -435,8 +487,13 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Relation</label>
-                            <input type="text" name="emergency_contact[relation]" value="{{ old('emergency_contact.relation', $emg['relation'] ?? '') }}"
-                                   class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                            <select name="emergency_contact[relation]" 
+                                    class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                                <option value="">Select Relation</option>
+                                @foreach ($emergencyRelations as $rel)
+                                    <option value="{{ $rel }}" {{ old('emergency_contact.relation', $emg['relation'] ?? '') === $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     <div>
@@ -460,8 +517,13 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Relation / Association</label>
-                            <input type="text" name="reference_contact[relation]" value="{{ old('reference_contact.relation', $ref['relation'] ?? '') }}"
-                                   class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                            <select name="reference_contact[relation]" 
+                                    class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                                <option value="">Select Association</option>
+                                @foreach ($referenceRelations as $rel)
+                                    <option value="{{ $rel }}" {{ old('reference_contact.relation', $ref['relation'] ?? '') === $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     <div>
@@ -494,17 +556,31 @@
                 <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 7 of 10</span>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach ([
-                    'name'         => 'Nominee Name',
-                    'relation'     => 'Nominee Relation',
-                    'occupation'   => 'Nominee Occupation',
-                ] as $key => $label)
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">{{ $label }}</label>
-                        <input type="text" name="nominee_details[{{ $key }}]" value="{{ old('nominee_details.'.$key, $nom[$key] ?? '') }}"
-                               class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
-                    </div>
-                @endforeach
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Name</label>
+                    <input type="text" name="nominee_details[name]" value="{{ old('nominee_details.name', $nom['name'] ?? '') }}"
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Relation</label>
+                    <select name="nominee_details[relation]" 
+                            class="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        <option value="">Select Nominee Relation</option>
+                        @foreach ($nomineeRelations as $rel)
+                            <option value="{{ $rel }}" {{ old('nominee_details.relation', $nom['relation'] ?? '') === $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Occupation</label>
+                    <select name="nominee_details[occupation]" 
+                            class="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white">
+                        <option value="">Select Nominee Occupation</option>
+                        @foreach ($occupations as $occ)
+                            <option value="{{ $occ }}" {{ old('nominee_details.occupation', $nom['occupation'] ?? '') === $occ ? 'selected' : '' }}>{{ $occ }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nominee Date of Birth</label>
                     <input type="date" name="nominee_details[dob]" value="{{ old('nominee_details.dob', $nom['dob'] ?? '') }}"
@@ -529,8 +605,17 @@
             <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-4">Nominee Bank Account</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Bank Name</label>
+                        <x-searchable-select 
+                            name="nominee_details[bank_name]" 
+                            :value="old('nominee_details.bank_name', $nom['bank_name'] ?? '')" 
+                            :options="$banks" 
+                            placeholder="Search bank name..." 
+                            :allowCustom="true" 
+                        />
+                    </div>
                     @foreach ([
-                        'bank_name'      => ['Bank Name', false],
                         'account_holder' => ['Account Holder', false],
                         'account_number' => ['Account Number', true],
                         'ifsc_code'      => ['IFSC Code', true],
@@ -589,8 +674,13 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Relation</label>
-                            <input type="text" name="family_members[{{ $i }}][relation]" value="{{ old("family_members.{$i}.relation", $f['relation'] ?? '') }}"
-                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                            <select name="family_members[{{ $i }}][relation]" 
+                                    class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                                <option value="">Select Relation</option>
+                                @foreach ($familyRelations as $rel)
+                                    <option value="{{ $rel }}" {{ old("family_members.{$i}.relation", $f['relation'] ?? '') === $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Date of Birth</label>
@@ -614,8 +704,13 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Occupation</label>
-                            <input type="text" name="family_members[{{ $i }}][occupation]" value="{{ old("family_members.{$i}.occupation", $f['occupation'] ?? '') }}"
-                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                            <select name="family_members[{{ $i }}][occupation]" 
+                                    class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-300 focus:border-brand-500 bg-white">
+                                <option value="">Select Occupation</option>
+                                @foreach ($occupations as $occ)
+                                    <option value="{{ $occ }}" {{ old("family_members.{$i}.occupation", $f['occupation'] ?? '') === $occ ? 'selected' : '' }}>{{ $occ }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -692,20 +787,46 @@
                 <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Step 10 of 10</span>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach ([
-                    'laptop_model'  => 'Laptop / PC Model',
-                    'laptop_serial' => 'Laptop / PC Serial Number',
-                    'mobile_model'  => 'Mobile Phone Model',
-                    'mobile_imei'   => 'Mobile Serial Number (IMEI)',
-                    'sim_number'    => 'Company SIM Number',
-                    'other_assets'  => 'Other Assets / Accessories',
-                ] as $key => $label)
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">{{ $label }}</label>
-                        <input type="text" name="asset_details[{{ $key }}]" value="{{ old('asset_details.'.$key, $assets[$key] ?? '') }}"
-                               class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
-                    </div>
-                @endforeach
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Laptop / PC Model</label>
+                    <x-searchable-select 
+                        name="asset_details[laptop_model]" 
+                        :value="old('asset_details.laptop_model', $assets['laptop_model'] ?? '')" 
+                        :options="$laptopModels" 
+                        placeholder="Search or enter laptop / PC model..." 
+                        :allowCustom="true" 
+                    />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Laptop / PC Serial Number</label>
+                    <input type="text" name="asset_details[laptop_serial]" value="{{ old('asset_details.laptop_serial', $assets['laptop_serial'] ?? '') }}"
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mobile Phone Model</label>
+                    <input type="text" name="asset_details[mobile_model]" value="{{ old('asset_details.mobile_model', $assets['mobile_model'] ?? '') }}"
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mobile Serial Number (IMEI)</label>
+                    <input type="text" name="asset_details[mobile_imei]" value="{{ old('asset_details.mobile_imei', $assets['mobile_imei'] ?? '') }}"
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Company SIM Option / Number</label>
+                    <x-searchable-select 
+                        name="asset_details[sim_number]" 
+                        :value="old('asset_details.sim_number', $assets['sim_number'] ?? '')" 
+                        :options="$simOptions" 
+                        placeholder="Select or enter SIM option..." 
+                        :allowCustom="true" 
+                    />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Other Assets / Accessories</label>
+                    <input type="text" name="asset_details[other_assets]" value="{{ old('asset_details.other_assets', $assets['other_assets'] ?? '') }}"
+                           class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
             </div>
             <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                 <button type="button" @click="activeTab = 'docs'" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Back</button>

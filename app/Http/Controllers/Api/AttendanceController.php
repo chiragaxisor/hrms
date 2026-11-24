@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Attendance;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
@@ -15,7 +15,7 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        
+
         $attendances = Attendance::where('user_id', $user->id)
             ->orderBy('date', 'desc')
             ->limit(30)
@@ -25,7 +25,7 @@ class AttendanceController extends Controller
                     'id' => $attendance->id,
                     'date' => Carbon::parse($attendance->date)->format('d F Y'),
                     'totalHours' => $attendance->total_hours ?? '00:00:00 hrs',
-                    'clockInOut' => ($attendance->clock_in ? Carbon::parse($attendance->clock_in)->format('h:i A') : '--:--') . ' — ' . 
+                    'clockInOut' => ($attendance->clock_in ? Carbon::parse($attendance->clock_in)->format('h:i A') : '--:--').' — '.
                                     ($attendance->clock_out ? Carbon::parse($attendance->clock_out)->format('h:i A') : '--:--'),
                     'status' => $attendance->status,
                 ];
@@ -33,7 +33,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $attendances
+            'data' => $attendances,
         ]);
     }
 
@@ -62,7 +62,7 @@ class AttendanceController extends Controller
 
         switch ($request->type) {
             case 'IN':
-                if (!$attendance->clock_in) {
+                if (! $attendance->clock_in) {
                     $attendance->clock_in = $now;
                     $message = 'Clocked in successfully.';
                 } else {
@@ -70,12 +70,12 @@ class AttendanceController extends Controller
                 }
                 break;
             case 'OUT':
-                if ($attendance->clock_in && !$attendance->clock_out) {
+                if ($attendance->clock_in && ! $attendance->clock_out) {
                     $attendance->clock_out = $now;
                     // Calculate total hours simple logic
                     $in = Carbon::parse($attendance->clock_in);
                     $diff = $in->diffInSeconds($now);
-                    $attendance->total_hours = gmdate('H:i:s', $diff) . ' hrs';
+                    $attendance->total_hours = gmdate('H:i:s', $diff).' hrs';
                     $message = 'Clocked out successfully.';
                 } else {
                     return response()->json(['success' => false, 'message' => 'Cannot clock out right now.'], 400);
@@ -93,7 +93,7 @@ class AttendanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data' => $attendance
+            'data' => $attendance,
         ]);
     }
 }

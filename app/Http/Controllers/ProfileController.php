@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Department;
 use App\Models\Designation;
+use App\Support\EmployeeFormData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -79,8 +80,12 @@ class ProfileController extends Controller
 
         $departments = Department::where('status', 'Active')->orderBy('name')->get();
         $designations = Designation::where('status', 'Active')->orderBy('title')->get();
+        $formData = EmployeeFormData::all($employee->id);
 
-        return view('profile.employee-edit', compact('employee', 'departments', 'designations'));
+        return view('profile.employee-edit', array_merge(
+            compact('employee', 'departments', 'designations'),
+            $formData
+        ));
     }
 
     /**

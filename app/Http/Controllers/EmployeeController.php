@@ -7,6 +7,7 @@ use App\Models\Designation;
 use App\Models\Employee;
 use App\Models\SalaryStructure;
 use App\Models\User;
+use App\Support\EmployeeFormData;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,8 +52,12 @@ class EmployeeController extends Controller
         $suggestedCode = 'EMP-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
         $departments = Department::where('status', 'Active')->orderBy('name')->get();
         $designations = Designation::where('status', 'Active')->orderBy('title')->get();
+        $formData = EmployeeFormData::all();
 
-        return view('employees.create', compact('suggestedCode', 'departments', 'designations'));
+        return view('employees.create', array_merge(
+            compact('suggestedCode', 'departments', 'designations'),
+            $formData
+        ));
     }
 
     /**
@@ -173,8 +178,12 @@ class EmployeeController extends Controller
     {
         $departments = Department::where('status', 'Active')->orderBy('name')->get();
         $designations = Designation::where('status', 'Active')->orderBy('title')->get();
+        $formData = EmployeeFormData::all($employee->id);
 
-        return view('employees.edit', compact('employee', 'departments', 'designations'));
+        return view('employees.edit', array_merge(
+            compact('employee', 'departments', 'designations'),
+            $formData
+        ));
     }
 
     /**
